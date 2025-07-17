@@ -16,4 +16,4 @@ class MykivyApp(app.App):
     
 if __name__ == '__main__':
     MykivyApp = MykivyApp()
-    MykivyApp.run()    
+    MykivyApp.run()
