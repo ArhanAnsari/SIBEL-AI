@@ -42,7 +42,7 @@ class Jarvis(widget.Widget):
         
         clock.Clock.schedule_interval(self.update_time, 1)
         
-        self.title = label.Label(text='[b][color=3333ff]CodeWithArhan[/color][/b]',font_size = 42,markup=True,font_name='static/dusri.ttf',pos=(920,900))
+        self.title = label.Label(text='[b][color=3333ff]SIBEL by CodeWithArhan[/color][/b]',font_size = 42,markup=True,font_name='static/dusri.ttf',pos=(920,900))
         self.add_widget(self.title)
         
         self.subtitles_input = textinput.TextInput(
