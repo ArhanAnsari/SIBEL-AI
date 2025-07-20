@@ -25,26 +25,21 @@ class Jarvis(widget.Widget):
         self.volume = 0
         self.volume_history = [0,0,0,0,0,0,0]
         self.volume_history_size = 140
-      
         self.min_size = .2 * SCREEN_WIDTH
         self.max_size = .7 * SCREEN_WIDTH
-        
+        self.intro_greeted = False
         self.add_widget(image.Image(source='static/border.eps.png',size=(1920,1080)))
         self.circle = JarvisButton(size=(284.0,284.0),background_normal='static/circle.png')
         self.circle.bind(on_press=self.start_recording)
         self.start_recording()
         self.add_widget(image.Image(source='static/jarvis.gif', size=(self.min_size, self.min_size), pos=(SCREEN_WIDTH / 2 - self.min_size / 2, SCREEN_HEIGHT / 2 - self.min_size / 2)))
-        
         time_layout = boxlayout.BoxLayout(orientation='vertical',pos=(150,900))
         self.time_label = label.Label(text='', font_size=24, markup=True,font_name='static/mw.ttf')
         time_layout.add_widget(self.time_label)
         self.add_widget(time_layout)
-        
         clock.Clock.schedule_interval(self.update_time, 1)
-        
         self.title = label.Label(text='[b][color=3333ff]SIBEL by CodeWithArhan[/color][/b]',font_size = 42,markup=True,font_name='static/dusri.ttf',pos=(920,900))
         self.add_widget(self.title)
-        
         self.subtitles_input = textinput.TextInput(
             text='Hey Arhan! I am your personal assistant',
             font_size=24,
@@ -58,10 +53,8 @@ class Jarvis(widget.Widget):
             font_name='static/teesri.otf',
         )
         self.add_widget(self.subtitles_input)
-        
         self.vrh=label.Label(text='',font_size=30,markup=True,font_name='static/mw.ttf',pos=(1500,500))
         self.add_widget(self.vrh)
-        
         self.vlh=label.Label(text='',font_size=30,markup=True,font_name='static/mw.ttf',pos=(400,500))
         self.add_widget(self.vlh)
         self.add_widget(self.circle)
@@ -84,33 +77,48 @@ class Jarvis(widget.Widget):
                 queri = 'None'
                 
     def start_recording(self, *args):
-            print("recording started") 
-            threading.Thread(target=self.run_speech_recognition).start()
-            print("recording ended") 
+        print("recording started")
+        threading.Thread(target=self.run_speech_recognition_loop).start()
+        print("recording ended")
             
             
-    def run_speech_recognition(self):
+    def run_speech_recognition_loop(self):
+        if not self.intro_greeted:
+            speak("Good morning! I am SIBEL, your personal assistant. How may I assist you today?")
+            clock.Clock.schedule_once(lambda dt: setattr(self.subtitles_input, 'text', "Hey Arhan! I am your personal assistant"))
+            self.intro_greeted = True
+        while True:
             print('before speech rec obj')
             r = sr.Recognizer()
+            query = None
             with sr.Microphone() as source:
                 print("Listening...")
-                audio=r.listen(source) 
-                print("audio recorded")
-                
-            print("after speech rec obj") 
-            
+                try:
+                    audio = r.listen(source, timeout=5, phrase_time_limit=8)
+                    print("audio recorded")
+                except Exception as e:
+                    print(f"Error during listening: {e}")
+                    continue
+            print("after speech rec obj")
             try:
-                query=r.recognize_google(audio,language="en-in") 
+                query = r.recognize_google(audio, language="en-in")
                 print(f'Recognised: {query}')
-                clock.Clock.schedule_once(lambda dt: setattr(self.subtitles_input,'text',query))
+                clock.Clock.schedule_once(lambda dt: setattr(self.subtitles_input, 'text', query))
                 self.handle_jarvis_commands(query.lower())
-                                
             except sr.UnknownValueError:
                 print("Google speech recognition could not understand audio")
-                
+                speak("Sorry, I couldn't understand. Can you please repeat that?")
+                clock.Clock.schedule_once(lambda dt: setattr(self.subtitles_input, 'text', "Sorry, I couldn't understand. Can you please repeat that?"))
+                continue
             except sr.RequestError as e:
-                print(e) 
-            return query.lower()  
+                print(e)
+                speak("Sorry, there was a problem with the speech recognition service.")
+                continue
+            except Exception as e:
+                print(f"Unexpected error: {e}")
+                continue
+            if query is not None and query.lower() != 'none':
+                return query.lower()
         
     def update_time(self,dt):
             current_time = time.strftime('TIME\n\t%H:%M:%S')
